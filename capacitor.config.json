@@ -1,0 +1,16 @@
+{
+  "appId": "watch.app",
+  "appName": "T-Watch S3 App",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true
+    },
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

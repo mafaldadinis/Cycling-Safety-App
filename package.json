@@ -1,0 +1,32 @@
+{
+  "name": "capacitor-app",
+  "version": "1.0.0",
+  "description": "An Amazing Capacitor App",
+  "type": "module",
+  "keywords": [
+    "capacitor",
+    "mobile"
+  ],
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "host": "vite --host"
+  },
+  "dependencies": {
+    "@capacitor-community/bluetooth-le": "^7.0.0",
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/camera": "7.0.1",
+    "@capacitor/core": "^7.2.0",
+    "@capacitor/geolocation": "7.1.2",
+    "@capacitor/motion": "^7.0.0",
+    "@capacitor/network": "^7.0.1",
+    "@capacitor/splash-screen": "7.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "latest",
+    "vite": "5.4.19"
+  },
+  "author": "",
+  "license": "ISC"
+}
