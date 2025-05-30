@@ -40,12 +40,62 @@ async function initialize() {
 
   // Start continuous location updates
   locationWatchId = Geolocation.watchPosition(
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    { enableHighAccuracy: true, timeout: 1000, maximumAge: 0 },
     (position, err) => {
       if (position) {
-        const { latitude, longitude } = position.coords;
-        document.getElementById('loc')!.textContent =
-          `Loc: lat:${latitude.toFixed(6)} lon:${longitude.toFixed(6)}`;
+        const {
+          latitude,
+          longitude,
+          altitude,
+          accuracy,
+          altitudeAccuracy,
+          heading,
+          speed
+        } = position.coords;
+
+        const timestamp = position.timestamp;
+
+        const info = `
+      Loc: lat:${latitude.toFixed(6)} lon:${longitude.toFixed(6)}
+      Altitude: ${altitude ?? 'N/A'} m
+      Accuracy: ${accuracy} m
+      Altitude Accuracy: ${altitudeAccuracy ?? 'N/A'} m
+      Heading: ${heading ?? 'N/A'}°
+      Speed: ${speed ? (speed * 3.6).toFixed(1) : 'N/A'} km/h
+      Timestamp: ${new Date(timestamp).toISOString()}
+    `;
+
+        document.getElementById('loc')!.textContent = info;
+
+        const csv = [
+          latitude,
+          longitude,
+          altitude,
+          accuracy,
+          altitudeAccuracy,
+          heading,
+          speed,
+          timestamp
+        ].map(val => (val !== null ? val : 'null')).join(',');
+
+        console.log('CSV location data:', csv);
+
+        // Optionally send CSV over Bluetooth if connected
+        if (watchDevice) {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(csv);
+          const dataView = new DataView(data.buffer);
+          try {
+            BleClient.write(
+              watchDevice.deviceId,
+              SERVICE_UUID,
+              CHARACTERISTIC_UUID,
+              dataView
+            );
+          } catch (err) {
+            console.error('Error sending location data over BLE:', err);
+          }
+        }
       } else {
         console.error('Location watch error', err);
       }
