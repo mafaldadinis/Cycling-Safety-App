@@ -1,10 +1,8 @@
 .arrow-icon .arrow {
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 20px solid darkblue;
-  transform-origin: center;
+  width: 20px;
+  height: 20px;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  background: linear-gradient(to right, darkblue 50%, lightblue 50%);
   margin: auto;
   display: block;
 }
@@ -27,7 +25,11 @@ h1 {
   display: flex;
   justify-content: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+
+.button-group button {
+  flex: 1;
 }
 
 button {
@@ -67,7 +69,4 @@ button:hover:not(:disabled) {
   margin: 1rem auto;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-#btn-toggle-csv {
-  margin-top: 0.5rem;
 }

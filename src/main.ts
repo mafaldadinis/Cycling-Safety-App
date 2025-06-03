@@ -1,13 +1,45 @@
-// Linear color scale from green (0) to red (1)
 function getColor(value: number): string {
-  const r = Math.round(255 * value);
-  const g = Math.round(255 * (1 - value));
-  return `rgb(${r},${g},0)`;
+  // Clamp to [0,1]
+  const v = Math.min(Math.max(value, 0), 1);
+  if (v <= 0.3) {
+    return 'rgb(0,255,0)'; // Green for low values
+  } else if (v <= 0.4) {
+    return 'rgb(255,255,0)'; // Yellow for medium values
+  } else {
+    return 'rgb(255,0,0)'; // Red for high values
+  }
 }
+
+/* function getColor(value: number): string {
+  // Clamp to [0,1]
+  const v = Math.min(Math.max(value, 0), 1);
+
+  let r: number;
+  let g: number;
+
+  if (v <= 0.5) {
+    // Ramp red from 0→255 while green stays at 255
+    const t = v / 0.5;       // t ∈ [0,1]
+    r = Math.round(t * 255);
+    g = 255;
+  } else {
+    // Red stays at 255; ramp green from 255→0
+    const t = (v - 0.5) / 0.5;  // t ∈ [0,1]
+    r = 255;
+    g = Math.round((1 - t) * 255);
+  }
+
+  return `rgb(${r},${g},0)`;
+} */
+
+
+
+
 import { BleClient } from '@capacitor-community/bluetooth-le';
 import type { BleDevice } from '@capacitor-community/bluetooth-le';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
+import * as L from 'leaflet'; 
 
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
@@ -38,9 +70,8 @@ async function initialize() {
     <div class="button-group">
       <button id="btn-connect">Connect</button>
       <button id="btn-disconnect" disabled>Disconnect</button>
-      <button id="btn-send" disabled>Send Hello</button>
+      <button id="btn-toggle-csv">Points</button>
     </div>
-    <button id="btn-toggle-csv">Toggle CSV Layer</button>
     <div id="status">Status: Disconnected</div>
     <div id="accel">Accel: x:N/A y:N/A z:N/A</div>
     <div id="loc">Loc: lat:N/A lon:N/A</div>
@@ -49,7 +80,6 @@ async function initialize() {
 
   document.getElementById('btn-connect')!.addEventListener('click', connectWatch);
   document.getElementById('btn-disconnect')!.addEventListener('click', disconnectWatch);
-  document.getElementById('btn-send')!.addEventListener('click', sendTest);
 
   // CSV markers layer setup
   document.getElementById('btn-toggle-csv')!.addEventListener('click', () => {
@@ -62,9 +92,9 @@ async function initialize() {
   });
 
   // Start continuous location updates
-  locationWatchId = Geolocation.watchPosition(
+  locationWatchId = await Geolocation.watchPosition(
     { enableHighAccuracy: true, timeout: 1000, maximumAge: 0 },
-    (position, err) => {
+    async (position, err) => {
       if (position) {
         const {
           latitude,
@@ -110,7 +140,8 @@ async function initialize() {
 
           // --- CSV LayerGroup and marker loading ---
           csvLayer = L.layerGroup().addTo(map);
-          fetch('/data.csv')
+          const csvPath = '/data.csv';
+          fetch(csvPath)
             .then(res => res.text())
             .then(csvText => {
               const lines = csvText.trim().split('\n');
@@ -156,22 +187,22 @@ async function initialize() {
           heading,
           speed,
           timestamp
-        ].map(val => (val !== null ? val : 'null')).join(',');
+        ].map(val => (val !== null ? val : '0')).join(',');
 
         console.log('Geolocation :', csv);
 
-        // Optionally send CSV over Bluetooth if connected
         if (watchDevice) {
           const encoder = new TextEncoder();
           const data = encoder.encode(csv);
           const dataView = new DataView(data.buffer);
           try {
-            BleClient.write(
-              watchDevice.deviceId,
+            await BleClient.write(
+              watchDevice!.deviceId,
               SERVICE_UUID,
               CHARACTERISTIC_UUID,
               dataView
             );
+            console.log('Sent location data over BLE:', csv);
           } catch (err) {
             console.error('Error sending location data over BLE:', err);
           }
@@ -193,24 +224,14 @@ async function connectWatch() {
     if (!(await BleClient.isEnabled())) {
       await BleClient.requestEnable();
     }
-
     // Scan and connect to device
     watchDevice = await BleClient.requestDevice({
-      filters: [{ services: [SERVICE_UUID] }],
-      optionalServices: [SERVICE_UUID]
+      services: [SERVICE_UUID]
     });
     await BleClient.connect(watchDevice.deviceId);
+
     statusEl.textContent = 'Status: Connected';
     document.getElementById('btn-disconnect')!.removeAttribute('disabled');
-    document.getElementById('btn-send')!.removeAttribute('disabled');
-
-    // Start receiving accelerometer notifications
-    await BleClient.startNotifications(
-      watchDevice.deviceId,
-      SERVICE_UUID,
-      CHARACTERISTIC_UUID,
-      handleNotification
-    );
   } catch (err) {
     console.error('Connection failed', err);
     statusEl.textContent = 'Status: Connection Failed';
@@ -235,10 +256,9 @@ async function disconnectWatch() {
   statusEl.textContent = 'Status: Disconnected';
   document.getElementById('btn-connect')!.removeAttribute('disabled');
   document.getElementById('btn-disconnect')!.setAttribute('disabled', 'true');
-  document.getElementById('btn-send')!.setAttribute('disabled', 'true');
 }
 
-// Test write to BLE device
+/* // Test write to BLE device
 async function sendTest() {
   if (!watchDevice) {
     console.warn('No device connected');
@@ -259,9 +279,9 @@ async function sendTest() {
   } catch (err) {
     console.error('Error sending hello:', err);
   }
-}
+} */
 
-function handleNotification(value: DataView) {
+/* function handleNotification(value: DataView) {
   // Debug: print raw DataView notification
   console.log('Raw DataView notification:', value);
   // Convert DataView to a Uint8Array
@@ -278,7 +298,7 @@ function handleNotification(value: DataView) {
   } catch (err) {
     console.error('Error parsing JSON from DataView:', err);
   }
-}
+} */
 
 // Initialize when the DOM is ready
 document.addEventListener('DOMContentLoaded', initialize);
