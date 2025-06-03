@@ -68,3 +68,6 @@ button:hover:not(:disabled) {
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+#btn-toggle-csv {
+  margin-top: 0.5rem;
+}
