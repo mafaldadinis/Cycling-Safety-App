@@ -1,4 +1,4 @@
-function getColor(value: number): string {
+/* function getColor(value: number): string {
   // Clamp to [0,1]
   const v = Math.min(Math.max(value, 0), 1);
   if (v <= 0.3) {
@@ -8,7 +8,7 @@ function getColor(value: number): string {
   } else {
     return 'rgb(255,0,0)'; // Red for high values
   }
-}
+} */
 
 /* function getColor(value: number): string {
   // Clamp to [0,1]
@@ -31,6 +31,32 @@ function getColor(value: number): string {
 
   return `rgb(${r},${g},0)`;
 } */
+
+function getColor(v: number): string {
+  // 1) Clamp input into [0,1]
+  const value = Math.min(Math.max(v, 0), 1);
+
+  let r: number;
+  let g: number;
+
+  if (value <= 0.5) {
+    // First half: ramp R from 0→255, keep G=255
+    // t ∈ [0,1] over v∈[0,0.5]
+    const t = value / 0.5;
+    r = Math.round(t * 255);
+    g = 255;
+  } else {
+    // Second half: keep R=255, ramp G from 255→0
+    // t ∈ [0,1] over v∈[0.5,1]
+    const t = (value - 0.5) / 0.5;
+    r = 255;
+    g = Math.round((1 - t) * 255);
+  }
+
+  // Blue is always 0 in this green→yellow→red ramp
+  const b = 0;
+  return `rgb(${r},${g},${b})`;
+}
 
 
 
@@ -166,7 +192,7 @@ async function initialize() {
                   fillColor: color,
                   fillOpacity: 0.8,
                   weight: 2
-                }).bindPopup(markerLabel || `${lat}, ${lon}, ${value}`);
+                }).bindPopup(markerLabel || `${lat.toFixed(3)}, ${lon.toFixed(3)}, ${value.toFixed(3)}`);
                 csvLayer!.addLayer(marker);
               }
             })
