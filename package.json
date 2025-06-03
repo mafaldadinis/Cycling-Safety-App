@@ -21,7 +21,8 @@
     "@capacitor/geolocation": "7.1.2",
     "@capacitor/motion": "^7.0.0",
     "@capacitor/network": "^7.0.1",
-    "@capacitor/splash-screen": "7.0.1"
+    "@capacitor/splash-screen": "7.0.1",
+    "leaflet": "^1.9.4"
   },
   "devDependencies": {
     "@capacitor/cli": "latest",

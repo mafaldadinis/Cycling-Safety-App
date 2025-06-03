@@ -9,6 +9,9 @@ const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 let watchDevice: BleDevice | null = null;
 let locationWatchId: string | number | null = null;
 
+let map: L.Map | null = null;
+let marker: L.Marker | null = null;
+
 async function initialize() {
   if (!document.getElementById('app')) {
     throw new Error('No <div id="app"></div> found in index.html');
@@ -25,13 +28,15 @@ async function initialize() {
   // Build user interface
   const app = document.getElementById('app')!;
   app.innerHTML = `
-    <h1>ESP32 Watch Connector</h1>
-    <button id="btn-connect">Connect</button>
-    <button id="btn-disconnect" disabled>Disconnect</button>
-    <button id="btn-send" disabled>Send Hello</button>
-    <p id="status">Status: Disconnected</p>
-    <p id="accel">Accel: x:N/A y:N/A z:N/A</p>
-    <p id="loc">Loc: lat:N/A lon:N/A</p>
+    <div class="button-group">
+      <button id="btn-connect">Connect</button>
+      <button id="btn-disconnect" disabled>Disconnect</button>
+      <button id="btn-send" disabled>Send Hello</button>
+    </div>
+    <div id="status">Status: Disconnected</div>
+    <div id="accel">Accel: x:N/A y:N/A z:N/A</div>
+    <div id="loc">Loc: lat:N/A lon:N/A</div>
+    <div id="map"></div>
   `;
 
   document.getElementById('btn-connect')!.addEventListener('click', connectWatch);
@@ -66,6 +71,29 @@ async function initialize() {
     `;
 
         document.getElementById('loc')!.textContent = info;
+
+        const mapEl = document.getElementById('map');
+
+        if (mapEl && !map) {
+          map = L.map('map').setView([latitude, longitude], 15);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+          }).addTo(map);
+          // Create a rotating arrow icon
+          const arrowIcon = L.divIcon({
+            className: 'arrow-icon',
+            html: '<div class="arrow"></div>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+          });
+          marker = L.marker([latitude, longitude], { icon: arrowIcon }).addTo(map);
+          marker.getElement()?.querySelector('.arrow')?.setAttribute('style', `transform: rotate(${heading ?? 0}deg)`);
+          setTimeout(() => map!.invalidateSize(), 100);
+        } else if (map && marker) {
+          marker.setLatLng([latitude, longitude]);
+          map.setView([latitude, longitude]);
+          marker.getElement()?.querySelector('.arrow')?.setAttribute('style', `transform: rotate(${heading ?? 0}deg)`);
+        }
 
         const csv = [
           latitude,
