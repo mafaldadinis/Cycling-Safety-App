@@ -99,7 +99,6 @@ async function initialize() {
       <button id="btn-toggle-csv">Points</button>
     </div>
     <div id="status">Status: Disconnected</div>
-    <div id="accel">Accel: x:N/A y:N/A z:N/A</div>
     <div id="loc">Loc: lat:N/A lon:N/A</div>
     <div id="map"></div>
   `;
